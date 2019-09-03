@@ -78,6 +78,7 @@
 
 #define MAJOR_NR LOOP_MAJOR
 
+//static int max_loop = 256;
 static int max_loop = 8;
 static struct loop_device *loop_dev;
 static int *loop_sizes;

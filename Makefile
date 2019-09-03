@@ -1,7 +1,7 @@
 VERSION = 2
 PATCHLEVEL = 4
 SUBLEVEL = 37
-EXTRAVERSION = .11
+EXTRAVERSION = .11-rescue
 
 KERNELRELEASE=$(VERSION).$(PATCHLEVEL).$(SUBLEVEL)$(EXTRAVERSION)
 
@@ -19,7 +19,8 @@ FINDHPATH	= $(HPATH)/asm $(HPATH)/linux $(HPATH)/scsi $(HPATH)/net $(HPATH)/math
 HOSTCC  	= gcc
 HOSTCFLAGS	= -Wall -Wstrict-prototypes -O2 -fomit-frame-pointer
 
-CROSS_COMPILE 	=
+SHELL		= /bin/sh
+CROSS_COMPILE 	= $(SHELL) $(TOPDIR)/CROSS_COMPILE/
 
 #
 # Include the make variables (CC, etc...)
@@ -35,12 +36,12 @@ STRIP		= $(CROSS_COMPILE)strip
 OBJCOPY		= $(CROSS_COMPILE)objcopy
 OBJDUMP		= $(CROSS_COMPILE)objdump
 MAKEFILES	= $(TOPDIR)/.config
-GENKSYMS	= /sbin/genksyms
-DEPMOD		= /sbin/depmod
+GENKSYMS	= $(TOPDIR)/modutils/genksyms
 MODFLAGS	= -DMODULE
 CFLAGS_KERNEL	=
 PERL		= perl
 AWK		= awk
+DEPMOD		= $(PERL) $(TOPDIR)/depmod.pl
 RPM 		:= $(shell if [ -x "/usr/bin/rpmbuild" ]; then echo rpmbuild; \
 		    	else echo rpm; fi)
 
@@ -91,7 +92,7 @@ export MODLIB
 
 CPPFLAGS := -D__KERNEL__ -I$(HPATH)
 
-CFLAGS := $(CPPFLAGS) -Wall -Wstrict-prototypes -Wno-trigraphs -O2 \
+CFLAGS := $(CPPFLAGS) -Wall -Wstrict-prototypes -Wno-trigraphs -Os \
 	  -fno-strict-aliasing -fno-common
 CFLAGS += -fno-builtin-strpbrk -fno-builtin-sprintf
 ifndef CONFIG_FRAME_POINTER
@@ -115,7 +116,7 @@ CFLAGS += $(call check_gcc,-fno-delete-null-pointer-checks,)
 # This is i386 specific.
 #
 
-export ROOT_DEV = CURRENT
+export ROOT_DEV = 
 
 #
 # If you want to preset the SVGA mode, uncomment the next line and
@@ -428,14 +429,15 @@ _modinst_:
 # vmlinux.  This depmod is only for convenience to give the initial
 # boot a modules.dep even before / is mounted read-write.  However the
 # boot script depmod is the master version.
-ifeq "$(strip $(INSTALL_MOD_PATH))" ""
-depmod_opts	:=
-else
-depmod_opts	:= -b $(INSTALL_MOD_PATH) -r
-endif
+#ifeq "$(strip $(INSTALL_MOD_PATH))" ""
+$(strip $(INSTALL_MOD_PATH))
+#depmod_opts	:= 
+#else
+depmod_opts	:= -b $(INSTALL_MOD_PATH)/lib/modules/$(KERNELRELEASE) > $(INSTALL_MOD_PATH)/lib/modules/$(KERNELRELEASE)/modules.dep
+#endif
 .PHONY: _modinst_post
 _modinst_post: _modinst_post_pcmcia
-	if [ -r System.map ]; then $(DEPMOD) -ae -F System.map $(depmod_opts) $(KERNELRELEASE); fi
+	if [ -r System.map ]; then $(DEPMOD) -F System.map $(depmod_opts) > /dev/null 2>&1; fi
 
 # Backwards compatibilty symlinks for people still using old versions
 # of pcmcia-cs with hard coded pathnames on insmod.  Remove
@@ -469,7 +471,7 @@ clean:	archclean
 	rm -rf $(CLEAN_DIRS)
 	$(MAKE) -C Documentation/DocBook clean
 
-mrproper: clean archmrproper
+mrproper: clean archmrproper genksyms-clean
 	find . \( -size 0 -o -name .depend \) -type f -print | xargs rm -f
 	rm -f $(MRPROPER_FILES)
 	rm -rf $(MRPROPER_DIRS)
@@ -524,7 +526,13 @@ MODVERFILE :=
 endif
 export	MODVERFILE
 
-depend dep: dep-files
+depend dep: genksyms dep-files
+
+genksyms:
+	{ cd $(TOPDIR)/modutils; make; }
+
+genksyms-clean:
+	{ cd $(TOPDIR)/modutils; make clean; }
 
 checkconfig:
 	find * -name '*.[hcS]' -type f -print | sort | xargs $(PERL) -w scripts/checkconfig.pl

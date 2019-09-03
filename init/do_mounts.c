@@ -791,8 +791,9 @@ static void __init mount_root(void)
 				ROOT_DEV = MKDEV(RAMDISK_MAJOR, 1);
 				create_dev("/dev/root", ROOT_DEV, NULL);
 			}
-		} else
-			change_floppy("root floppy");
+		}
+//		} else
+//			change_floppy("root floppy");
 	}
 #endif
 	mount_block_root("/dev/root", root_mountflags);
@@ -905,7 +906,11 @@ void prepare_namespace(void)
 		ssleep(root_delay);
 	}
 
-	is_floppy = MAJOR(ROOT_DEV) == FLOPPY_MAJOR;
+//	is_floppy = MAJOR(ROOT_DEV) == FLOPPY_MAJOR;
+        is_floppy = (MAJOR(ROOT_DEV) == FLOPPY_MAJOR ||
+                    (MAJOR(ROOT_DEV) == SCSI_DISK0_MAJOR &&
+                    MINOR(ROOT_DEV) == 0));
+
 #ifdef CONFIG_ALL_PPC
 	extern void arch_discover_root(void);
 	arch_discover_root();

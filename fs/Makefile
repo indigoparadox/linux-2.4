@@ -32,9 +32,13 @@ subdir-$(CONFIG_CODA_FS)	+= coda
 subdir-$(CONFIG_INTERMEZZO_FS)	+= intermezzo
 subdir-$(CONFIG_MINIX_FS)	+= minix
 subdir-$(CONFIG_FAT_FS)		+= fat
+# For umsdos being able to be the root filesystem, vfat should be put after 
+# umsdos and msdos. But this is not really comfortable since one mounts more
+# vfat-filesystems than umsdos-roots. If umsdos is really needed to be the 
+# root-filesystem one should use the boot option: rootfstype=umsdos.
+subdir-$(CONFIG_VFAT_FS)	+= vfat
 subdir-$(CONFIG_UMSDOS_FS)	+= umsdos
 subdir-$(CONFIG_MSDOS_FS)	+= msdos
-subdir-$(CONFIG_VFAT_FS)	+= vfat
 subdir-$(CONFIG_BFS_FS)		+= bfs
 subdir-$(CONFIG_ISO9660_FS)	+= isofs
 subdir-$(CONFIG_DEVFS_FS)	+= devfs

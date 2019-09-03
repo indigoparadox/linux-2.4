@@ -1,0 +1,2 @@
+#!/bin/sh
+ld-2.18 --architecture elf32-i386 --format elf32-i386 "$@"
